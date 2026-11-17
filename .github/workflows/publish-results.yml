@@ -4,6 +4,12 @@ on:
   workflow_run:
     workflows: [Process model]
     types: [completed]
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Successful or failed Process model run ID to publish/retry
+        required: true
+        type: string
 
 permissions:
   actions: read
@@ -12,7 +18,7 @@ permissions:
 
 jobs:
   publish:
-    if: github.event.workflow_run.event == 'issues' && github.event.workflow_run.head_repository.full_name == github.repository
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.event == 'issues' && github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -23,11 +29,16 @@ jobs:
           EXPECTED_REPOSITORY: ${{ github.repository }}
         with:
           script: |
-            const run = context.payload.workflow_run;
+            let run = context.payload.workflow_run;
+            if (context.eventName === 'workflow_dispatch') {
+              const sourceRunId = String(context.payload.inputs?.source_run_id || '');
+              if (!/^\d+$/.test(sourceRunId)) throw new Error('Source run ID must be numeric');
+              const { data } = await github.rest.actions.getWorkflowRun({ ...context.repo, run_id: Number(sourceRunId) });
+              run = data;
+            }
             const { data: workflow } = await github.rest.actions.getWorkflow({ ...context.repo, workflow_id: run.workflow_id });
             const workflowPath = String(workflow.path || '').split('@')[0].replace(/^\/+/, '');
-            // `run.name` reflects the dynamic `run-name` (for example,
-            // "Process Issue #1"), so validate the registered workflow itself.
+            // Run display names are dynamic; validate the registered workflow.
             if (workflow.name !== 'Process model' || workflowPath !== '.github/workflows/process-model.yml') throw new Error('Unexpected source workflow');
             if (run.event !== 'issues' || run.repository.full_name !== process.env.EXPECTED_REPOSITORY || run.head_repository?.full_name !== process.env.EXPECTED_REPOSITORY) throw new Error('Unexpected source repository or event');
             const match = /^Process Issue #(\d+)$/.exec(run.display_title || '');

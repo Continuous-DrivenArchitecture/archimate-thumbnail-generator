@@ -17,7 +17,7 @@ test('publishing the same workflow run twice does not duplicate or overwrite res
     const file = '20261117-033000-issue42-business-view-a1b2c3.png';
     const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="160"><rect width="320" height="160" fill="white"/><rect x="20" y="20" width="120" height="60" fill="#ddf" stroke="#222"/><text x="30" y="55">Business view</text></svg>';
     await sharp(Buffer.from(svg)).png().toFile(path.join(imageDir, file));
-    const modelPath = fileURLToPath(new URL('../fixtures/three-views.archimate', import.meta.url));
+    const modelPath = fileURLToPath(new URL('../fixtures/three-views.archimate.txt', import.meta.url));
     const manifest = await createManifest({
       issueNumber: 42, runId: '123456', timestamp: '2026-11-17T03:30:00Z', modelName: 'Test model', modelPath,
       views: [{ name: 'Business View', id: 'a1b2c3', file }], detectedViewCount: 1,

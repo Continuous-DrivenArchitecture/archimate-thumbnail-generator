@@ -19,7 +19,7 @@ test('Archi runtime exports all model views as real diagrams', { timeout: 300_00
   const dist = path.join(root, 'dist');
   await Promise.all([mkdir(workspace), mkdir(output), mkdir(dist)]);
   try {
-    await cp(new URL('../fixtures/three-views.archimate', import.meta.url), path.join(workspace, 'model.archimate'));
+    await cp(new URL('../fixtures/three-views.archimate.txt', import.meta.url), path.join(workspace, 'model.archimate'));
     if (process.platform === 'linux') await Promise.all([chmod(root, 0o755), chmod(workspace, 0o777), chmod(output, 0o777), chmod(path.join(workspace, 'model.archimate'), 0o644)]);
     const runtime = new ArchiRuntime({ image: 'ghcr.io/continuous-drivenarchitecture/archi-runtime:v0.1.0', workspace, outputDirectory: output, timeout: 240_000 });
     const result = await runtime.run({ args: ['--loadModel', '/workspace/model.archimate', '--html.createReport', '/output/report'] });

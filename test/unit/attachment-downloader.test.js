@@ -7,7 +7,7 @@ import { downloadModel } from '../../src/attachment-downloader.js';
 
 test('streams an .archimate.txt upload to a fixed model path and validates its XML contents', async () => {
   const temp = await mkdtemp(path.join(os.tmpdir(), 'archimate-download-'));
-  const xml = await readFile(new URL('../fixtures/three-views.archimate', import.meta.url), 'utf8');
+  const xml = await readFile(new URL('../fixtures/three-views.archimate.txt', import.meta.url), 'utf8');
   const originalFetch = globalThis.fetch;
   try {
     globalThis.fetch = async () => new Response(xml, { status: 200, headers: { 'content-type': 'application/xml' } });

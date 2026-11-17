@@ -9,6 +9,7 @@ import { extractViews } from './view-extractor.js';
 import { createThumbnail } from './thumbnail-generator.js';
 import { createManifest } from './manifest-generator.js';
 import { viewOutputFilename } from './output-naming.js';
+import { removeIsolatedTempDirectory } from './temp-cleanup.js';
 
 export async function processIssue({ issue, runId, outputDirectory, timestamp = new Date() }) {
   const temp = await import('node:fs/promises').then(({ mkdtemp }) => mkdtemp(path.join(tmpdir(), 'archimate-job-')));
@@ -68,7 +69,7 @@ export async function processIssue({ issue, runId, outputDirectory, timestamp = 
     await writeFile(path.join(artifacts, 'result.json'), JSON.stringify({ success: false, issueNumber: issue.number, runId: String(runId), stage: error.stage ?? stage, reason: safeReason(error.message) }), { mode: 0o600 });
     throw error;
   } finally {
-    await import('node:fs/promises').then(({ rm }) => rm(temp, { recursive: true, force: true }));
+    await removeIsolatedTempDirectory(temp);
   }
 }
 

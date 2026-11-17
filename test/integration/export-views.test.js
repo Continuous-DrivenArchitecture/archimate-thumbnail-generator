@@ -2,13 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import os from 'node:os';
 import path from 'node:path';
-import { chmod, cp, mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { chmod, cp, mkdtemp, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import sharp from 'sharp';
 import { ArchiRuntime } from '@continuous-driven-architecture/archi-runtime';
 import { extractViews } from '../../src/view-extractor.js';
 import { createThumbnail } from '../../src/thumbnail-generator.js';
 import { viewOutputFilename } from '../../src/output-naming.js';
 import { createManifest } from '../../src/manifest-generator.js';
+import { removeIsolatedTempDirectory } from '../../src/temp-cleanup.js';
 
 test('Archi runtime exports all model views as real diagrams', { timeout: 300_000 }, async (t) => {
   if (process.env.RUN_ARCHI_INTEGRATION !== '1') return t.skip('Set RUN_ARCHI_INTEGRATION=1 to run the Docker integration test');
@@ -56,6 +57,6 @@ test('Archi runtime exports all model views as real diagrams', { timeout: 300_00
     const savedManifest = JSON.parse(await readFile(path.join(dist, 'manifest.json'), 'utf8'));
     assert.deepEqual(savedManifest.views.map((view) => view.name).sort(), views.map((view) => view.name).sort());
   } finally {
-    await rm(root, { recursive: true, force: true });
+    await removeIsolatedTempDirectory(root);
   }
 });

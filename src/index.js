@@ -56,7 +56,7 @@ export async function processIssue({ issue, runId, outputDirectory, timestamp = 
       }
     }
     const manifest = await createManifest({
-      issueNumber: issue.number, runId, timestamp, modelName: input.modelName,
+      issueNumber: issue.number, runId, timestamp, modelName: model.modelName,
       modelPath: model.modelPath, views: records, errors, versions: { archi: '5.11.0', coArchi: '0.9.8' }
     });
     await writeFile(path.join(artifacts, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`, { mode: 0o600 });

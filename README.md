@@ -4,7 +4,7 @@ Create a GitHub Issue, attach one native Archi `.archimate` model file directly,
 
 ## Architecture
 
-1. The `Generate ArchiMate Thumbnails` Issue Form records the model name and accepts one `.archimate` attachment.
+1. The `Generate ArchiMate Thumbnails` Issue Form accepts one `.archimate` attachment. The model name is read from the model file itself.
 2. `Process model` runs on `issues.opened` with read-only repository/Issue permissions. It streams and validates the upload, invokes `ArchiRuntime` v0.1.0, and uploads generated files as a short-lived Actions artifact.
 3. `Publish results` is triggered by the completed processing workflow. It verifies the originating workflow, repository, Issue, run and artifact; validates all files without executing artifact content; then commits results to `dist/` and comments on the Issue.
 
@@ -13,7 +13,7 @@ The export mechanism is Archi's documented CLI: `--loadModel <*.archimate>` foll
 ## Create a request
 
 1. Open **Issues → New issue → Generate ArchiMate Thumbnails**.
-2. Enter a model name and optionally add a description.
+2. Optionally add a description; no model-name text field is needed.
 3. Attach exactly one native `.archimate` model file directly. Drag the file into the attachment field and wait for GitHub to show the uploaded filename/link before submitting. Do not ZIP the model or use external file hosts.
 4. Submit the Issue. Processing starts when the Issue is opened; later Issue edits do not start another processing run.
 

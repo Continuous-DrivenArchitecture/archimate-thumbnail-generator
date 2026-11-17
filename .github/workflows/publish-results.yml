@@ -33,7 +33,7 @@ jobs:
             const issue = Number(match[1]);
             if (!Number.isSafeInteger(issue) || issue < 1) throw new Error('Source run contains an invalid Issue number');
             const { data: issueData } = await github.rest.issues.get({ ...context.repo, issue_number: issue });
-            const hasFormFields = issueData.body?.includes('### Model name') && issueData.body?.includes('### Attachment');
+            const hasFormFields = issueData.body?.includes('### Attachment');
             const isRequest = run.conclusion !== 'skipped' || hasFormFields;
             core.setOutput('is_request', String(isRequest));
             if (!isRequest) return;

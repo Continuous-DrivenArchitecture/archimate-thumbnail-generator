@@ -5,15 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Attach exactly one native Archi `.archimate` model file directly—do not put it in a ZIP. Drag the model file into the attachment field and wait until GitHub displays the uploaded filename/link before submitting. Do not paste a link to an external file host.
-  - type: input
-    id: model-name
-    attributes:
-      label: Model name
-      description: A short name shown in the result comment.
-      placeholder: Architecture Model
-    validations:
-      required: true
+        The model name is read from the `.archimate` file. Attach exactly one native model file directly—do not put it in a ZIP. Drag the file into the attachment field and wait until GitHub displays the uploaded filename/link before submitting. Do not paste a link to an external file host.
   - type: textarea
     id: description
     attributes:
@@ -28,4 +20,4 @@ body:
       description: Drag and drop the `.archimate` file here, or paste it so GitHub uploads it. Wait until the uploaded filename/link appears before submitting. Do not paste a link to an external file host.
       placeholder: Drag and drop one .archimate model file here
     validations:
-      required: false
+      required: true

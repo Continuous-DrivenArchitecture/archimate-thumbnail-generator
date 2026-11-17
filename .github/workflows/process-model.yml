@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   process:
-    if: contains(github.event.issue.body, '### Model name') && contains(github.event.issue.body, '### Attachment')
+    if: contains(github.event.issue.body, '### Attachment')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

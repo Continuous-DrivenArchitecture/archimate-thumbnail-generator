@@ -1,0 +1,36 @@
+{
+  "issueNumber": 1,
+  "runId": "44071677606",
+  "timestampUtc": "2026-11-17T11:11:13.001Z",
+  "modelName": "Thumbnail Test Model",
+  "modelSha256": "3d763ac21a40d120bac8104ec585ff856a4c96980e4adf44429b30f069951c49",
+  "viewsDetected": 3,
+  "thumbnailsGenerated": 3,
+  "errorCount": 0,
+  "views": [
+    {
+      "name": "Application View",
+      "id": "view-application",
+      "file": "20261117-111113-issue1-application-view-view-application.png",
+      "error": null
+    },
+    {
+      "name": "Business View",
+      "id": "view-business",
+      "file": "20261117-111113-issue1-business-view-view-business.png",
+      "error": null
+    },
+    {
+      "name": "Technology View",
+      "id": "view-technology",
+      "file": "20261117-111113-issue1-technology-view-view-technology.png",
+      "error": null
+    }
+  ],
+  "errors": [],
+  "versions": {
+    "archiRuntime": "0.1.0",
+    "archi": "5.11.0",
+    "coArchi": "0.9.8"
+  }
+}

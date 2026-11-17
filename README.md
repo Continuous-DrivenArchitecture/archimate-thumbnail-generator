@@ -57,7 +57,7 @@ The integration test loads a real native model, runs Archi, extracts every view,
 
 ## GitHub Actions configuration
 
-Enable Actions and permit workflows to create/approve pull requests only if required by your organization; this project does not create pull requests. Under **Settings → Actions → General → Workflow permissions**, allow `GITHUB_TOKEN` read/write access (the workflows themselves declare least-privilege permissions). Branch protection must permit the repository Actions token to push to the default branch, or publication will fail and the Issue will remain open. No PAT or external database/service is required.
+Enable Actions. An organization administrator must allow repository workflows to request `GITHUB_TOKEN` write permissions; then set **Repository Settings → Actions → General → Workflow permissions** to read/write. The workflows still declare least-privilege permissions individually: processing is read-only and only the publisher requests `contents: write` and `issues: write`. Branch protection must permit the repository Actions token to push to the default branch, or publication will fail and the Issue will remain open. No PAT or external database/service is required. If organization policy disables workflow write tokens, repository administrators cannot override it; publishing cannot work until the organization policy is changed.
 
 ## Troubleshooting and known limits
 

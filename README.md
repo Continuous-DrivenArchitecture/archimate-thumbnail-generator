@@ -1,10 +1,10 @@
 # ArchiMate Thumbnail Generator
 
-Create a GitHub Issue, attach one native Archi `.archimate` model file directly, and receive one PNG thumbnail per view. No ZIP is needed. Archi performs the actual report rendering; Node.js validates inputs, extracts the report diagrams, resizes PNGs, and writes a run manifest.
+Create a GitHub Issue, attach a text copy of one native Archi model, and receive one PNG thumbnail per view. GitHub Issues rejects the `.archimate` extension, so rename a copy to `.archimate.txt` without changing its contents; no ZIP is used. Archi performs the actual report rendering; Node.js validates inputs, extracts the report diagrams, resizes PNGs, and writes a run manifest.
 
 ## Architecture
 
-1. The `Generate ArchiMate Thumbnails` Issue Form accepts one `.archimate` attachment. The model name is read from the model file itself.
+1. The `Generate ArchiMate Thumbnails` Issue Form accepts one `.archimate.txt` attachment. The model name is read from the XML model itself.
 2. `Process model` runs on `issues.opened` with read-only repository/Issue permissions. It streams and validates the upload, invokes `ArchiRuntime` v0.1.0, and uploads generated files as a short-lived Actions artifact.
 3. `Publish results` is triggered by the completed processing workflow. It verifies the originating workflow, repository, Issue, run and artifact; validates all files without executing artifact content; then commits results to `dist/` and comments on the Issue.
 
@@ -14,7 +14,7 @@ The export mechanism is Archi's documented CLI: `--loadModel <*.archimate>` foll
 
 1. Open **Issues → New issue → Generate ArchiMate Thumbnails**.
 2. Optionally add a description; no model-name text field is needed.
-3. Attach exactly one native `.archimate` model file directly. Drag the file into the attachment field and wait for GitHub to show the uploaded filename/link before submitting. Do not ZIP the model or use external file hosts.
+3. Make a copy of the `.archimate` file and rename it to `.archimate.txt` (or `.txt`). Do not edit its contents or ZIP it. Attach that copy directly and wait for GitHub to show the uploaded filename/link before submitting.
 4. Submit the Issue. Processing starts when the Issue is opened; later Issue edits do not start another processing run.
 
 Users need only a GitHub account and a browser. They do not need Docker, Node.js, or Archi installed.
@@ -60,7 +60,7 @@ Enable Actions. An organization administrator must allow repository workflows to
 
 ## Troubleshooting and known limits
 
-- **No attachment / invalid model:** attach one native `.archimate` file directly to the Issue using GitHub's upload control. Do not upload a ZIP.
+- **No attachment / invalid model:** attach one `.archimate.txt` copy directly to the Issue using GitHub's upload control. Ensure the contents are still the original ArchiMate XML; do not upload a ZIP.
 - **Unsupported or corrupt model:** open and save the file with Archi, then upload it again. The model is treated as untrusted data and must not rely on scripts.
 - **No diagrams in the report:** only views that Archi renders as diagram images are exportable; empty or non-diagram views do not get fabricated thumbnails.
 - **Timeout or runner limits:** try a smaller model or reduce the number of views. Model size, view count, image size and execution time are capped.

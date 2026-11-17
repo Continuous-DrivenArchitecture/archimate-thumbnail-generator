@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        The model name is read from the `.archimate` file. Attach exactly one native model file directly—do not put it in a ZIP. Drag the file into the attachment field and wait until GitHub displays the uploaded filename/link before submitting. Do not paste a link to an external file host.
+        GitHub Issues does not accept `.archimate` uploads. Make a copy of your model and rename the copy to end in `.txt` (for example, `model.archimate.txt`); do not edit its contents or put it in a ZIP. Attach that text file directly. The model name is read from its XML contents. Wait until GitHub displays the uploaded filename/link before submitting. Do not paste a link to an external file host.
   - type: textarea
     id: description
     attributes:
@@ -17,7 +17,7 @@ body:
     id: attachment
     attributes:
       label: Attachment
-      description: Drag and drop the `.archimate` file here, or paste it so GitHub uploads it. Wait until the uploaded filename/link appears before submitting. Do not paste a link to an external file host.
-      placeholder: Drag and drop one .archimate model file here
+      description: Drag and drop the `.archimate.txt` copy here, or paste it so GitHub uploads it. Keep the original XML contents unchanged. Wait until the uploaded filename/link appears before submitting.
+      placeholder: Drag and drop one .archimate.txt model copy here
     validations:
       required: true

@@ -2,7 +2,7 @@ const ATTACHMENT = /https:\/\/(?:github\.com\/user-attachments\/(?:files|assets)
 
 export function parseIssue(body = '') {
   const urls = [...new Set(body.match(ATTACHMENT) ?? [])].map((url) => url.replace(/[.,;]+$/, ''));
-  if (urls.length !== 1) throw new Error(urls.length ? 'Attach exactly one native .archimate model file' : 'No .archimate attachment found');
+  if (urls.length !== 1) throw new Error(urls.length ? 'Attach exactly one native ArchiMate model file' : 'No model attachment found');
   return { attachmentUrl: urls[0] };
 }
 

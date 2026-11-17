@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import os from 'node:os';
 import path from 'node:path';
-import { cp, mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { chmod, cp, mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import sharp from 'sharp';
 import { ArchiRuntime } from '@continuous-driven-architecture/archi-runtime';
 import { extractViews } from '../../src/view-extractor.js';
@@ -19,9 +19,11 @@ test('Archi runtime exports all model views as real diagrams', { timeout: 300_00
   await Promise.all([mkdir(workspace), mkdir(output), mkdir(dist)]);
   try {
     await cp(new URL('../fixtures/three-views.archimate', import.meta.url), path.join(workspace, 'model.archimate'));
+    if (process.platform === 'linux') await Promise.all([chmod(root, 0o755), chmod(workspace, 0o777), chmod(output, 0o777), chmod(path.join(workspace, 'model.archimate'), 0o644)]);
     const runtime = new ArchiRuntime({ image: 'ghcr.io/continuous-drivenarchitecture/archi-runtime:v0.1.0', workspace, outputDirectory: output, timeout: 240_000 });
     const result = await runtime.run({ args: ['--loadModel', '/workspace/model.archimate', '--html.createReport', '/output/report'] });
     assert.equal(result.exitCode, 0, `${result.stdout}\n${result.stderr}`);
+    assert.match(result.stdout, /Report generated!/);
     const views = await extractViews(path.join(output, 'report'), { maxViews: 100 });
     assert.equal(views.length, 3);
     assert.deepEqual(views.map((view) => `${view.name}:${view.reportId}`).sort(), [

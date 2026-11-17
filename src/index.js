@@ -3,7 +3,7 @@ import path from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { parseIssue } from './issue-parser.js';
-import { downloadAndExtractModel } from './attachment-downloader.js';
+import { downloadModel } from './attachment-downloader.js';
 import { runArchi } from './archi-processor.js';
 import { extractViews } from './view-extractor.js';
 import { createThumbnail } from './thumbnail-generator.js';
@@ -27,13 +27,11 @@ export async function processIssue({ issue, runId, outputDirectory, timestamp = 
     const input = parseIssue(issue.body);
     stage = 'download';
     const limits = {
-      maxZipBytes: boundedLimit('MAX_ZIP_BYTES', 25 * 1024 * 1024, 1024, 100 * 1024 * 1024),
-      maxUncompressedBytes: boundedLimit('MAX_UNCOMPRESSED_BYTES', 100 * 1024 * 1024, 1024, 1024 * 1024 * 1024),
-      maxEntries: boundedLimit('MAX_ARCHIVE_ENTRIES', 500, 1, 10_000),
+      maxModelBytes: boundedLimit('MAX_MODEL_BYTES', 100 * 1024 * 1024, 1024, 100 * 1024 * 1024),
       maxViews: boundedLimit('MAX_VIEWS', 100, 1, 100),
       maxOutputBytes: boundedLimit('MAX_OUTPUT_BYTES', 500 * 1024 * 1024, 1024, 2 * 1024 * 1024 * 1024)
     };
-    const model = await downloadAndExtractModel(input.attachmentUrl, workspace, limits);
+    const model = await downloadModel(input.attachmentUrl, workspace, limits);
     stage = 'archi';
     const archiResult = await runArchi(model.modelPath, workspace, output, { timeout: boundedLimit('ARCHI_TIMEOUT_MS', 240_000, 10_000, 600_000) });
     stage = 'extract';

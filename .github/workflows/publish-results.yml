@@ -131,7 +131,7 @@ jobs:
               const clean = value => String(value || '').replace(/[\r\n\t`*_<>]/g, ' ').slice(0, 240);
               const stage = clean(detail.stage || (process.env.SOURCE_CONCLUSION === 'success' ? 'validation or publication' : 'processing'));
               const reason = clean(detail.reason || (process.env.SOURCE_CONCLUSION === 'success' ? 'The artifact failed validation or could not be published.' : 'The processing workflow did not complete successfully.'));
-              body = `${marker}\nArchiMate thumbnail processing failed.\n\nStage: ${stage}\nReason: ${reason}\n\n[View workflow run](${runUrl})\n\nCheck that the ZIP contains exactly one valid Archi model and retry with a new Issue if necessary.`;
+              body = `${marker}\nArchiMate thumbnail processing failed.\n\nStage: ${stage}\nReason: ${reason}\n\n[View workflow run](${runUrl})\n\nAttach exactly one valid native Archi model file directly and retry with a new Issue if necessary.`;
             }
             const { data: comments } = await github.rest.issues.listComments({ ...context.repo, issue_number, per_page: 100 });
             const prior = comments.find(comment => comment.body?.includes(marker));

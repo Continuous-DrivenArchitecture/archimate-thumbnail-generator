@@ -13,11 +13,9 @@
   "dependencies": {
     "@continuous-driven-architecture/archi-runtime": "github:Continuous-DrivenArchitecture/archi-runtime#v0.1.0",
     "cheerio": "^1.0.0",
-    "sharp": "^0.35.5",
-    "yauzl": "^3.2.0"
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
-    "yaml": "^2.9.1",
-    "yazl": "^3.3.1"
+    "yaml": "^2.9.1"
   }
 }

@@ -5,7 +5,7 @@ export function parseIssue(body = '') {
   const modelName = body.match(TITLE)?.[1]?.trim();
   if (!modelName) throw new Error('The required “Model name” field is missing');
   const urls = [...new Set(body.match(ATTACHMENT) ?? [])].map((url) => url.replace(/[.,;]+$/, ''));
-  if (urls.length !== 1) throw new Error(urls.length ? 'Exactly one ZIP attachment is required' : 'No ZIP attachment found');
+  if (urls.length !== 1) throw new Error(urls.length ? 'Attach exactly one native .archimate model file' : 'No .archimate attachment found');
   return { modelName: modelName.slice(0, 200), attachmentUrl: urls[0] };
 }
 

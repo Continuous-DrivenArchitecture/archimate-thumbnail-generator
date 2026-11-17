@@ -1,0 +1,150 @@
+name: Publish results
+
+on:
+  workflow_run:
+    workflows: [Process model]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: write
+  issues: write
+
+jobs:
+  publish:
+    if: github.event.workflow_run.event == 'issues' && github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Validate source workflow and artifact provenance
+        id: provenance
+        uses: actions/github-script@v7
+        env:
+          EXPECTED_REPOSITORY: ${{ github.repository }}
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            const { data: workflow } = await github.rest.actions.getWorkflow({ ...context.repo, workflow_id: run.workflow_id });
+            const workflowPath = String(workflow.path || '').split('@')[0].replace(/^\/+/, '');
+            if (run.name !== 'Process model' || workflowPath !== '.github/workflows/process-model.yml') throw new Error('Unexpected source workflow');
+            if (run.event !== 'issues' || run.repository.full_name !== process.env.EXPECTED_REPOSITORY || run.head_repository?.full_name !== process.env.EXPECTED_REPOSITORY) throw new Error('Unexpected source repository or event');
+            const match = /^Process Issue #(\d+)$/.exec(run.display_title || '');
+            if (!match) throw new Error('Could not determine Issue number from source run');
+            const issue = Number(match[1]);
+            if (!Number.isSafeInteger(issue) || issue < 1) throw new Error('Source run contains an invalid Issue number');
+            const { data: issueData } = await github.rest.issues.get({ ...context.repo, issue_number: issue });
+            const hasFormFields = issueData.body?.includes('### Model name') && issueData.body?.includes('### Attachment');
+            const isRequest = run.conclusion !== 'skipped' || hasFormFields;
+            core.setOutput('is_request', String(isRequest));
+            if (!isRequest) return;
+            const { data: artifacts } = await github.rest.actions.listWorkflowRunArtifacts({ ...context.repo, run_id: run.id });
+            const artifact = artifacts.artifacts.find(a => a.name === `thumbnails-${run.id}` && !a.expired);
+            core.setOutput('issue', String(issue));
+            core.setOutput('run_id', String(run.id));
+            core.setOutput('conclusion', run.conclusion || 'unknown');
+            core.setOutput('artifact', artifact ? 'true' : 'false');
+      - uses: actions/checkout@v4
+        if: steps.provenance.outputs.is_request == 'true'
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        if: steps.provenance.outputs.is_request == 'true'
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+        if: steps.provenance.outputs.is_request == 'true'
+      - name: Download artifact from the validated source run
+        if: steps.provenance.outputs.is_request == 'true' && steps.provenance.outputs.artifact == 'true'
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: thumbnails-${{ steps.provenance.outputs.run_id }}
+          path: artifact
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.provenance.outputs.run_id }}
+      - name: Validate and stage generated files
+        id: publish
+        if: steps.provenance.outputs.is_request == 'true' && steps.provenance.outputs.artifact == 'true'
+        continue-on-error: true
+        env:
+          SOURCE_RUN_ID: ${{ steps.provenance.outputs.run_id }}
+          SOURCE_ISSUE_NUMBER: ${{ steps.provenance.outputs.issue }}
+          ARTIFACT_DIR: artifact
+        run: node scripts/publish-results.js
+      - name: Commit and push versioned results
+        id: commit
+        if: steps.provenance.outputs.is_request == 'true' && steps.publish.outcome == 'success' && steps.publish.outputs.success == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dist/
+          if git diff --cached --quiet; then echo "changed=false" >> "$GITHUB_OUTPUT"; exit 0; fi
+          git commit -m "chore: publish ArchiMate thumbnails for issue #${{ steps.provenance.outputs.issue }}"
+          AUTH_HEADER="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          for attempt in 1 2 3; do
+            if git -c "http.extraheader=$AUTH_HEADER" push origin "HEAD:$BRANCH"; then break; fi
+            if [ "$attempt" -eq 3 ]; then exit 1; fi
+            git -c "http.extraheader=$AUTH_HEADER" fetch origin "$BRANCH"
+            git rebase "origin/$BRANCH"
+          done
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+      - name: Comment, label, and close the Issue
+        if: always() && steps.provenance.outcome == 'success' && steps.provenance.outputs.is_request == 'true'
+        uses: actions/github-script@v7
+        env:
+          ISSUE_NUMBER: ${{ steps.provenance.outputs.issue }}
+          SOURCE_RUN_ID: ${{ steps.provenance.outputs.run_id }}
+          SOURCE_CONCLUSION: ${{ steps.provenance.outputs.conclusion }}
+          PUBLISH_OUTCOME: ${{ steps.publish.outcome }}
+          PUBLISH_RESULT: ${{ steps.publish.outputs.success }}
+          PUBLISH_SUMMARY: ${{ steps.publish.outputs.summary }}
+          COMMIT_OUTCOME: ${{ steps.commit.outcome }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        with:
+          script: |
+            const issue_number = Number(process.env.ISSUE_NUMBER);
+            const runId = process.env.SOURCE_RUN_ID;
+            const repo = `${context.repo.owner}/${context.repo.repo}`;
+            const success = process.env.SOURCE_CONCLUSION === 'success' && process.env.PUBLISH_OUTCOME === 'success' && process.env.PUBLISH_RESULT === 'true' && process.env.COMMIT_OUTCOME === 'success';
+            const marker = `<!-- archimate-thumbnail-generator:${runId} -->`;
+            const runUrl = `https://github.com/${repo}/actions/runs/${runId}`;
+            let body;
+            if (success) {
+              const summary = JSON.parse(process.env.PUBLISH_SUMMARY || '{}');
+              const lines = (summary.views || []).map((view, index) => {
+                const name = String(view.name || 'View').replace(/[\r\n\t]/g, ' ').replace(/[\\`*_{}\[\]()#+.!|<>]/g, '').slice(0, 80);
+                const url = `https://github.com/${repo}/blob/${process.env.DEFAULT_BRANCH}/dist/${encodeURIComponent(view.file)}?raw=1`;
+                return `- **${name}** · [PNG](${url})${index < 20 ? `\n\n  ![${name}](${url})` : ''}`;
+              });
+              const safeModel = String(summary.modelName || 'Model').replace(/[\r\n\t]/g, ' ').replace(/[\\`*_{}\[\]()#+.!|<>]/g, '').slice(0, 200);
+              const manifestLink = `https://github.com/${repo}/blob/${process.env.DEFAULT_BRANCH}/dist/${encodeURIComponent(summary.manifest)}`;
+              body = `${marker}\nArchiMate thumbnails generated successfully.\n\nModel: ${safeModel}\nViews detected: ${summary.viewsDetected}\nThumbnails generated: ${summary.thumbnailsGenerated}\nTimestamp: ${summary.timestampUtc}\n\nGenerated views:\n\n${lines.join('\n\n')}\n\nFiles: [dist/](https://github.com/${repo}/tree/${process.env.DEFAULT_BRANCH}/dist) · [Manifest](${manifestLink})\n\n[Workflow run](${runUrl})`;
+            } else {
+              let detail = {};
+              try { detail = JSON.parse(process.env.PUBLISH_SUMMARY || '{}'); } catch {}
+              const clean = value => String(value || '').replace(/[\r\n\t`*_<>]/g, ' ').slice(0, 240);
+              const stage = clean(detail.stage || (process.env.SOURCE_CONCLUSION === 'success' ? 'validation or publication' : 'processing'));
+              const reason = clean(detail.reason || (process.env.SOURCE_CONCLUSION === 'success' ? 'The artifact failed validation or could not be published.' : 'The processing workflow did not complete successfully.'));
+              body = `${marker}\nArchiMate thumbnail processing failed.\n\nStage: ${stage}\nReason: ${reason}\n\n[View workflow run](${runUrl})\n\nCheck that the ZIP contains exactly one valid Archi model and retry with a new Issue if necessary.`;
+            }
+            const { data: comments } = await github.rest.issues.listComments({ ...context.repo, issue_number, per_page: 100 });
+            const prior = comments.find(comment => comment.body?.includes(marker));
+            if (prior) await github.rest.issues.updateComment({ ...context.repo, comment_id: prior.id, body });
+            else await github.rest.issues.createComment({ ...context.repo, issue_number, body });
+            for (const name of [success ? 'completed' : 'failed']) {
+              try { await github.rest.issues.addLabels({ ...context.repo, issue_number, labels: [name] }); }
+              catch (error) {
+                if (error.status !== 404) throw error;
+                try { await github.rest.issues.createLabel({ ...context.repo, name, color: success ? '0e8a16' : 'd93f0b' }); }
+                catch (createError) { if (createError.status !== 422) throw createError; }
+                await github.rest.issues.addLabels({ ...context.repo, issue_number, labels: [name] });
+              }
+            }
+            try { await github.rest.issues.removeLabel({ ...context.repo, issue_number, name: success ? 'failed' : 'completed' }); } catch (error) { if (error.status !== 404) throw error; }
+            if (success) await github.rest.issues.update({ ...context.repo, issue_number, state: 'closed', state_reason: 'completed' });

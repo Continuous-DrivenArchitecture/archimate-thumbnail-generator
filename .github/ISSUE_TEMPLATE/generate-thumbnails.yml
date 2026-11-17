@@ -1,0 +1,31 @@
+name: Generate ArchiMate Thumbnails
+description: Generate PNG thumbnails for every view in an ArchiMate model
+title: "Generate thumbnails: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Attach one `.zip` file containing exactly one native Archi `.archimate` model. Create the ZIP locally using the operating system's normal archive feature; do not include folders, scripts, or other files. GitHub will upload the attachment when you submit this Issue.
+  - type: input
+    id: model-name
+    attributes:
+      label: Model name
+      description: A short name shown in the result comment.
+      placeholder: Architecture Model
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Optional context about the model.
+    validations:
+      required: false
+  - type: textarea
+    id: attachment
+    attributes:
+      label: Attachment
+      description: Drag and drop the ZIP file here, or paste it so GitHub uploads it. Wait until the uploaded filename/link appears before submitting. Do not paste a link to an external file host.
+      placeholder: Drag and drop one model ZIP here
+    validations:
+      required: false

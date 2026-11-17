@@ -1,0 +1,46 @@
+name: Process model
+run-name: "Process Issue #${{ github.event.issue.number }}"
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: read
+
+jobs:
+  process:
+    if: contains(github.event.issue.body, '### Model name') && contains(github.event.issue.body, '### Attachment')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Process Issue model
+        id: process
+        env:
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          ARTIFACT_DIR: artifacts
+        run: node src/index.js
+      - name: Preserve process status if setup or processing failed
+        if: always() && steps.process.outcome != 'success'
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          PROCESS_OUTCOME: ${{ steps.process.outcome }}
+        run: |
+          mkdir -p artifacts/images
+          node -e 'const fs=require("node:fs"); fs.writeFileSync("artifacts/result.json", JSON.stringify({success:false, issueNumber:Number(process.env.ISSUE_NUMBER), runId:String(process.env.GITHUB_RUN_ID), stage:"processing", reason:`Processing job failed (${process.env.PROCESS_OUTCOME})`}) + "\n")'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: thumbnails-${{ github.run_id }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 7

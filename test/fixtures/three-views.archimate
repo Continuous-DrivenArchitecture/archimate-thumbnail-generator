@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<archimate:model xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:archimate="http://www.archimatetool.com/archimate" name="Thumbnail Test Model" id="thumbnail-model" version="3.1.1">
+  <folder name="Business" id="business-folder" type="business">
+    <element xsi:type="archimate:BusinessActor" id="business-actor" name="Test Customer"/>
+  </folder>
+  <folder name="Application" id="application-folder" type="application">
+    <element xsi:type="archimate:ApplicationComponent" id="application-component" name="Test Application"/>
+  </folder>
+  <folder name="Technology" id="technology-folder" type="technology">
+    <element xsi:type="archimate:Node" id="technology-node" name="Test Node"/>
+  </folder>
+  <folder name="Relations" id="relations-folder" type="relations"/>
+  <folder name="Views" id="views-folder" type="diagrams">
+    <element xsi:type="archimate:ArchimateDiagramModel" id="view-business" name="Business View" viewpoint="1">
+      <child xsi:type="archimate:DiagramObject" id="business-object" archimateElement="business-actor"><bounds x="20" y="20" width="140" height="55"/></child>
+    </element>
+    <element xsi:type="archimate:ArchimateDiagramModel" id="view-application" name="Application View" viewpoint="2">
+      <child xsi:type="archimate:DiagramObject" id="application-object" archimateElement="application-component"><bounds x="20" y="20" width="160" height="55"/></child>
+    </element>
+    <element xsi:type="archimate:ArchimateDiagramModel" id="view-technology" name="Technology View" viewpoint="14">
+      <child xsi:type="archimate:DiagramObject" id="technology-object" archimateElement="technology-node"><bounds x="20" y="20" width="140" height="65"/></child>
+    </element>
+  </folder>
+</archimate:model>
